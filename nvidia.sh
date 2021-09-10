@@ -161,11 +161,9 @@ ask_question(){
         fi
     else
         # 文字が入力された
-        if printf "%s\n" "${_choice_list[@]}" | grep -x "${_input}" 1>/dev/null 2>&1; then
-            _choice="${_input}"
-        else
-            return 1
-        fi
+        for (( i=0; i <= ${#_choice_list[@]} - 1 ;i++ )); do
+            [[ "${_choice_list["${i}"],,}" = "${_input,,}" ]] && _choice="${_choice_list["${i}"]}" && break
+        done
     fi
     echo "${_choice}"
     return 0
