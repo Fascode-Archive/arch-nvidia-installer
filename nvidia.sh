@@ -219,6 +219,9 @@ _mkinitcpio_remove_modules(){
     sudo sed -i "s|^MODULES=(${_module_b[*]})|MODULES=(${_module_a[*]})|g" "/etc/mkinitcpio.conf"
 }
 
+#-- 異常終了 --#
+trap 'echo; exit "${?}"' 1 2 3 15
+
 #-- 処理開始 --#
 _confirm(){
     #(( UID == 0 )) || _msg_error "Please run the script as root" 1 # Rootチェック
