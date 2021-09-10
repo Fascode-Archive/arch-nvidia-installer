@@ -48,6 +48,7 @@ debug=false
 nocolor=false
 grub=false
 mkinitcpio=false
+reinstall=false
 
 #-- ハヤオの共通シェル関数 --#
 # text [-b/-c color/-g color/-f/-l/]
@@ -245,9 +246,22 @@ _environment_check(){
     _msg_info "Updating pacman database"
     pacman -Sy
     return 0
+
+    # Driver installed
+    if lsmod | cut -d " " -f 1 | grep -q nvidia; then
+        _msg_info "Nvidia driver has been installed. Do you want to re-install it?"
+        [[ "$(ask_question -d "No" "Yes" "No")" = "No" ]] && exit 0
+        reinstall=true
+        for _pkg in "nvidia" "nvidia-lts" "nvidia-dkms" "nvidia-390xx-dkms"; do
+            pacman -Qq "${_pkg}" | grep -qx "${_pkg}" && driver_packages+=("${_pkg}")
+            _msg_info "The script will install ${_pkg}"
+        done
+    fi
+
 }
 
 _select_install_pkg(){
+    [[ "${reinstall}" = true ]] && return 0
     _msg_info "Which NVIDIA GPU are you using?"
     case "$(ask_question "GeForce 630-900, 10-20 or newer" "GeForce 400/500/600 2010-2011" "More older GPU" "I'm not using NVIDIA GPU." )" in
         "GeForce 630-900, 10-20 or newer")
