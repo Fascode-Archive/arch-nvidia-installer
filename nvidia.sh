@@ -267,7 +267,7 @@ _select_install_pkg(){
         "GeForce 630-900, 10-20 or newer")
             _msg_info "Your GPU is officialy supported"
             _msg_info "Which kernel are you using"
-            case $(ask_question -d "$(basename "$(tr " " "\n" < "/proc/cmdline" | grep "^BOOT_IMAGE" | cut -d "=" -f 2)" | sed "s|^vmlinuz-||g")" "linux" "linux-lts" "Other kernel") in
+            case $(ask_question -d "$(basename "$(tr " " "\n" < "/proc/cmdline" | grep "^BOOT_IMAGE" | cut -d "=" -f 2)" | sed "s|^vmlinuz-||g")" "linux" "linux-lts" "linux-zen" "Other kernel") in
                 "linux")
                     _msg_info "The script will install nvidia"
                     driver_packages+=("nvidia")
@@ -276,7 +276,13 @@ _select_install_pkg(){
                     _msg_info "The script will install nvidia-lts"
                     driver_packages+=("nvidia-lts")
                     ;;
-                "Other kernel")
+                "Other kernel" | "linux-zen")
+                    _msg_info "The script will install nvidia-dkms"
+                    driver_packages+=("nvidia-dkms")
+                    ;;
+                *)
+                    _msg_warn "Unexpected kernel has been selected."
+                    _msg_warn "Install dkms driver"
                     _msg_info "The script will install nvidia-dkms"
                     driver_packages+=("nvidia-dkms")
                     ;;
