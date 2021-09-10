@@ -180,7 +180,7 @@ _grub_add_kernel_param(){
     _msg_info "Currnet kernel param: ${_grub_param[*]}"
     { printf "%s\n" "${_grub_param[@]}" | grep -qx "${1}";} && { _msg_info "Parameter ${1} already exists"; return 0; }
     _msg_info "New kernel param: ${_grub_param[*]} ${1}"
-    sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param[*]}\"|GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param[*]} ${1}\"|g" "/etc/default/grub"
+    sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param[*]}\"|GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param[*]} ${1}\"|g" "/etc/default/grub"
 }
 
 # _grub_remove_kernel_param <kernel param>
@@ -193,7 +193,7 @@ _grub_remove_kernel_param(){
     { printf "%s\n" "${_grub_param_b[@]}" | grep -qx "${1}"; } || { _msg_info "Parameter ${1} not included"; return 0; }
     readarray -t _grub_param_a < <(printf "%s\n" "${_grub_param_b[@]}" | grep -xv "${1}")
     _msg_info "New kernel param: ${_grub_param_a[*]}"
-    sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param_b[*]}\"|GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param_a[*]}\"|g" "/etc/default/grub"
+    sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param_b[*]}\"|GRUB_CMDLINE_LINUX_DEFAULT=\"${_grub_param_a[*]}\"|g" "/etc/default/grub"
 }
 
 _mkinitcpio_add_modules(){
@@ -204,7 +204,7 @@ _mkinitcpio_add_modules(){
     _msg_info "Currnet modules list: ${_module[*]}"
     { printf "%s\n" "${_module[@]}" | grep -qx "${1}";} && { _msg_info "Module ${1} already exists"; return 0; }
     _msg_info "New modules list: ${_module[*]} ${1}"
-    sed -i "s|^MODULES=(${_module[*]})|MODULES=(${_module[*]} ${1})|g" "/etc/mkinitcpio.conf"
+    sudo sed -i "s|^MODULES=(${_module[*]})|MODULES=(${_module[*]} ${1})|g" "/etc/mkinitcpio.conf"
 }
 
 _mkinitcpio_remove_modules(){
@@ -216,12 +216,12 @@ _mkinitcpio_remove_modules(){
     { printf "%s\n" "${_module_b[@]}" | grep -qx "${1}"; } || { _msg_info "Module ${1} not included"; return 0; }
     readarray -t _module_a < <(printf "%s\n" "${_module_b[@]}" | grep -xv "${1}")
     _msg_info "New modules list: ${_module_a[*]}"
-    sed -i "s|^MODULES=(${_module_b[*]})|MODULES=(${_module_a[*]})|g" "/etc/mkinitcpio.conf"
+    sudo sed -i "s|^MODULES=(${_module_b[*]})|MODULES=(${_module_a[*]})|g" "/etc/mkinitcpio.conf"
 }
 
 #-- 処理開始 --#
 _confirm(){
-    (( UID == 0 )) || _msg_error "Please run the script as root" 1 # Rootチェック
+    #(( UID == 0 )) || _msg_error "Please run the script as root" 1 # Rootチェック
 
     _msg_info "Do you want to install NVIDIA Driver ?"
     [[ "$(ask_question -d "No" "Yes" "No")" = "Yes" ]] || exit 0
@@ -244,7 +244,7 @@ _environment_check(){
     
     # Update database
     _msg_info "Updating pacman database"
-    pacman -Sy
+    sudo pacman -Sy
     return 0
 
     # Driver installed
@@ -297,9 +297,11 @@ _select_install_pkg(){
 }
 
 _install_driver(){
+    local pacman_args=("-S")
     if (( "${#driver_packages[@]}" != 0 )); then
         _msg_info "Installing NVIDIA driver ..."
-        pacman -S --needed "${driver_packages[@]}"
+        [[ "${reinstall}" = false ]] && pacman_args+=("--needed")
+        sudo pacman -S "${pacman_args[@]}" "${driver_packages[@]}"
     else
         _msg_warn "There are no packages to install from the repository."
     fi
@@ -314,7 +316,7 @@ _install_driver(){
 }
 
 _install_microcode(){
-    pacman -Qq intel-ucode 1> /dev/null 2>&1 && pacman -Sy --needed intel-ucode
+    pacman -Qq intel-ucode 1> /dev/null 2>&1 && sudo pacman -Sy --needed intel-ucode
 }
 
 _setup_drm_kms(){
